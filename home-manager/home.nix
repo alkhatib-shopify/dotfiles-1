@@ -7,14 +7,10 @@ let
     fd
     gitAndTools.hub
     gitAndTools.delta
-    git-crypt
     jq
     nixpkgs-fmt
     ripgrep
-    starship
     tokei
-    restic
-    xsv
     zoxide
   ];
   tpope.vim-rails = pkgs.vimUtils.buildVimPlugin {
@@ -42,6 +38,7 @@ in
     plugins = with pkgs.vimPlugins; [
       editorconfig-vim
       emmet-vim
+      coc-nvim
       fzf-vim
       nerdcommenter
       nerdtree
@@ -56,11 +53,13 @@ in
       vim-gitgutter
       vim-nix
       vim-ruby
+      vim-rhubarb
       vim-surround
       vim-terraform
       vim-toml
       vim-trailing-whitespace
       vim-yaml
+      ale
     ];
   };
   programs.tmux = {
@@ -113,9 +112,6 @@ in
       setopt hist_verify
     '';
     initExtra = ''
-      # nix
-      if [ -e "$HOME/.nix-profile/etc/profile.d/nix.sh" ]; then . "$HOME/.nix-profile/etc/profile.d/nix.sh"; fi
-
       # gnupg
       if ! pgrep -x -u "$USER" gpg-agent >/dev/null 2>&1; then
               gpg-connect-agent /bye >/dev/null 2>&1
@@ -137,13 +133,22 @@ in
 
       eval "$(zoxide init zsh)"
       eval "$(direnv hook zsh)"
-      eval "$(starship init zsh)"
+      alias vim='nvim'
+    '';
+    envExtra = ''
+      # nix
+      if [ -e "$HOME/.nix-profile/etc/profile.d/nix.sh" ]; then . "$HOME/.nix-profile/etc/profile.d/nix.sh"; fi
     '';
     sessionVariables = rec {
       EDITOR = "nvim";
       VISUAL = EDITOR;
       GIT_EDITOR = EDITOR;
       PATH = "$HOME/bin:$PATH";
+    };
+    oh-my-zsh = {
+      enable = true;
+      theme = "robbyrussell";
+      plugins=["git" "tmux" "python" "vi-mode"];
     };
   };
 }
