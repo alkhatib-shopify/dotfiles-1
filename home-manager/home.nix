@@ -13,6 +13,24 @@ let
     tokei
     zoxide
   ];
+  #programs.starship = {
+    #enable = true;
+    #enableZshIntegration = true;
+    #settings = {
+      #git_status = {
+        #disabled = true;
+      #};
+    #};
+  #};
+  shopify.vim-repoify = pkgs.vimUtils.buildVimPlugin {
+    name = "vim-repoify";
+    src = pkgs.fetchFromGitHub {
+      owner = "Shopify";
+      repo = "vim-repoify";
+      rev = "9e64e202be8b3577ab8091931ed8778eb2c8cac6";
+      sha256 = "0nhf4qd7dchrzjv2ijcddav72qb121c9jkkk06agsv23l9rb31pv";
+    };
+  };
   tpope.vim-rails = pkgs.vimUtils.buildVimPlugin {
     name = "vim-rails";
     src = pkgs.fetchFromGitHub {
@@ -22,8 +40,17 @@ let
       sha256 = "0nhf4qd7dchrzjv2ijcddav72qb121c9jkkk06agsv23l9rb31pv";
     };
   };
+  #deol-nvim = pkgs.vimUtils.buildVimPlugin {
+    #name = "deol-nvim";
+    #src = pkgs.fetchFromGitHub {
+      #owner = "Shougo";
+      #repo = "deoplete.nvim";
+      #rev = "2849fa544b9a3a07ec1ddafb2bb6f72945b24c62";
+      #sha256 = "1abb8k4ksc7wssba7pv721nqfnbcicy253mzgw1xfmzkvf3zcl8x";
+    #};
+  #};
 in
-{
+  {
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
   programs.home-manager.path = "~/dev/dotfiles/home-manager/home.nix";
@@ -39,6 +66,7 @@ in
       editorconfig-vim
       emmet-vim
       coc-nvim
+      #deol-nvim
       fzf-vim
       nerdcommenter
       nerdtree
@@ -46,17 +74,21 @@ in
       tagbar
       tpope.vim-rails
       typescript-vim
+      vim-orgmode
       vim-airline
       vim-airline-themes
       vim-endwise
+      vim-colorschemes
       vim-fugitive
       vim-gitgutter
       vim-nix
+      shopify.vim-repoify
       vim-ruby
       vim-rhubarb
       vim-surround
-      vim-terraform
+      vim-test
       vim-toml
+      vim-tmux-navigator
       vim-trailing-whitespace
       vim-yaml
       ale
@@ -83,6 +115,39 @@ in
       bind -r J resize-pane -D 5
       bind -r K resize-pane -U 5
       bind -r L resize-pane -R 5
+
+      # vim-like pane switching
+      bind -r k select-pane -U
+      bind -r j select-pane -D
+      bind -r h select-pane -L
+      bind -r l select-pane -R
+      # remove default binding since replacing
+      unbind Up
+      unbind Down
+      unbind Left
+      unbind Right
+      # Smart pane switching with awareness of Vim splits.
+      # See: https://github.com/christoomey/vim-tmux-navigator
+      is_vim="ps -o state= -o comm= -t '#{pane_tty}' \
+          | grep -iqE '^[^TXZ ]+ +(\\S+\\/)?g?(view|n?vim?x?)(diff)?$'"
+      bind-key -n 'C-h' if-shell "$is_vim" 'send-keys C-h'  'select-pane -L'
+      bind-key -n 'C-j' if-shell "$is_vim" 'send-keys C-j'  'select-pane -D'
+      bind-key -n 'C-k' if-shell "$is_vim" 'send-keys C-k'  'select-pane -U'
+      bind-key -n 'C-l' if-shell "$is_vim" 'send-keys C-l'  'select-pane -R'
+      tmux_version='$(tmux -V | sed -En "s/^tmux ([0-9]+(.[0-9]+)?).*/\1/p")'
+      if-shell -b '[ "$(echo "$tmux_version < 3.0" | bc)" = 1 ]' \
+          "bind-key -n 'C-\\' if-shell \"$is_vim\" 'send-keys C-\\'  'select-pane -l'"
+      if-shell -b '[ "$(echo "$tmux_version >= 3.0" | bc)" = 1 ]' \
+          "bind-key -n 'C-\\' if-shell \"$is_vim\" 'send-keys C-\\\\'  'select-pane -l'"
+
+      bind-key -T copy-mode-vi 'C-h' select-pane -L
+      bind-key -T copy-mode-vi 'C-j' select-pane -D
+      bind-key -T copy-mode-vi 'C-k' select-pane -U
+      bind-key -T copy-mode-vi 'C-l' select-pane -R
+      bind-key -T copy-mode-vi 'C-\' select-pane -l
+
+      #set -g default-terminal "tmux-256color"
+      #set -ga terminal-overrides ",*256col*:Tc"
     '';
   };
 
@@ -117,6 +182,7 @@ in
               gpg-connect-agent /bye >/dev/null 2>&1
       fi
 
+
       gpg-connect-agent updatestartuptty /bye >/dev/null
 
       export GPG_TTY=$(tty)
@@ -134,6 +200,8 @@ in
       eval "$(zoxide init zsh)"
       eval "$(direnv hook zsh)"
       alias vim='nvim'
+      alias tmux='echo use tat'
+
     '';
     envExtra = ''
       # nix
